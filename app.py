@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from scipy.stats import poisson
+from datetime import date
 
 st.title("AI Soccer Prediction Engine")
 
@@ -8,9 +9,11 @@ st.title("AI Soccer Prediction Engine")
 # API SETTINGS
 #########################################
 
-API_KEY = "x-rapidapi-key: 7f6830d7bbmsh8e5aeb397ef584dp14c6dejsn66526c44d2b0'"
+API_KEY = "x-rapidapi-key: 7f6830d7bbmsh8e5aeb397ef584dp14c6dejsn66526c44d2b0"
 
-url = "https://api-football-v1.p.rapidapi.com/v3/fixtures?date=2026-02-26"
+today = date.today()
+
+url = f"https://api-football-v1.p.rapidapi.com/v3/fixtures?date={today}"
 
 headers = {
     "X-RapidAPI-Key": API_KEY,
@@ -18,6 +21,7 @@ headers = {
 }
 
 response = requests.get(url, headers=headers)
+
 data = response.json()
 
 matches = data["response"]

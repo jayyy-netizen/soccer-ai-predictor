@@ -2,7 +2,10 @@ import streamlit as st
 import requests
 from datetime import date
 from scipy.stats import poisson
+import requests
+import certifi
 
+response = requests.get(url, headers=headers, verify=certifi.where())
 st.title("AI Soccer Predictions - Daily Winners")
 
 #################################

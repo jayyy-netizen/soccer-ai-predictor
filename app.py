@@ -24,7 +24,7 @@ response = requests.get(url, headers=headers)
 
 # Safe JSON parsing
 try:
-    data = response.json()
+    matches = data["fixtures"]
 except Exception as e:
     st.error("Error reading API response: " + str(e))
     st.write(response.text)

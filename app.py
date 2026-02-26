@@ -1,14 +1,30 @@
 import streamlit as st
-import numpy as np
+import requests
 from scipy.stats import poisson
 
 st.title("AI Soccer Prediction Engine")
 
-matches = [
-("Team A", "Team B"),
-("Team C", "Team D"),
-("Team E", "Team F")
-]
+#########################################
+# API SETTINGS
+#########################################
+
+API_KEY = "x-rapidapi-key: 7f6830d7bbmsh8e5aeb397ef584dp14c6dejsn66526c44d2b0'"
+
+url = "https://api-football-v1.p.rapidapi.com/v3/fixtures?date=2026-02-26"
+
+headers = {
+    "X-RapidAPI-Key": API_KEY,
+    "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com"
+}
+
+response = requests.get(url, headers=headers)
+data = response.json()
+
+matches = data["response"]
+
+#########################################
+# POISSON MODEL FUNCTION
+#########################################
 
 def predict():
 
@@ -16,7 +32,6 @@ def predict():
     away_xg = 1.2
 
     max_goals = 5
-
     probs = {}
 
     for h in range(max_goals):
@@ -40,18 +55,60 @@ def predict():
         if h>0 and a>0:
             btts+=p
 
-    return home,draw,away,over25,btts
+    confidence = max(home, draw, away)
 
-for home_team,away_team in matches:
+    return home, draw, away, over25, btts, confidence
 
-    h,d,a,o,b = predict()
+#########################################
+# RUN PREDICTIONS
+#########################################
+
+results = []
+
+for match in matches:
+
+    home = match["teams"]["home"]["name"]
+    away = match["teams"]["away"]["name"]
+
+    h,d,a,o,b,c = predict()
+
+    results.append({
+        "home":home,
+        "away":away,
+        "home_prob":h,
+        "draw_prob":d,
+        "away_prob":a,
+        "over25":o,
+        "btts":b,
+        "confidence":c
+    })
+
+#########################################
+# TOP 10 DAILY PICKS
+#########################################
+
+sorted_games = sorted(results, key=lambda x: x["confidence"], reverse=True)
+top10 = sorted_games[:10]
+
+st.header("Daily Winners (Top 10 Highest Probability)")
+
+for game in top10:
 
     st.write("---")
-    st.subheader(home_team + " vs " + away_team)
+    st.subheader(game["home"] + " vs " + game["away"])
 
-    st.write("Home:", round(h*100,1),"%")
-    st.write("Draw:", round(d*100,1),"%")
-    st.write("Away:", round(a*100,1),"%")
+    st.write("Home:", round(game["home_prob"]*100,1), "%")
+    st.write("Draw:", round(game["draw_prob"]*100,1), "%")
+    st.write("Away:", round(game["away_prob"]*100,1), "%")
 
-    st.write("Over 2.5:", round(o*100,1),"%")
-    st.write("BTTS:", round(b*100,1),"%")
+    st.write("Over 2.5:", round(game["over25"]*100,1), "%")
+    st.write("BTTS:", round(game["btts"]*100,1), "%")
+
+#########################################
+# ALL MATCHES
+#########################################
+
+st.header("All Matches Today")
+
+for game in results:
+    st.write(game["home"], "vs", game["away"])
